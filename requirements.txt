@@ -1,16 +1,22 @@
 # Minimal runtime requirements (no versions). Only top-level packages you should pip-install.
 # For CUDA-enabled PyTorch wheels, install torch separately following https://pytorch.org/get-started/locally/
 
-torch
-torchvision
-torchaudio
+# PyTorch pinned to the conda-installed GPU-enabled build
+# Note: CUDA runtime (12.1) was installed via conda as `pytorch-cuda=12.1`.
+# On Windows it's recommended to install CUDA-enabled PyTorch via conda:
+#   conda install -n casenv -c pytorch -c nvidia pytorch pytorch-cuda=12.1
+# If you prefer pip wheels and they are available for your platform, use the
+# matching wheel on the PyTorch index (example spec): torch==2.5.1+cu121
+# torch==2.5.1+cu121
+# torchvision
+# torchaudio
 numpy
 pandas
 scikit-learn
 matplotlib
 tqdm
-xgboost
-
+ipykernel
+torch-optimizer
 # Install with:
 # python -m pip install -r requirements.txt
 # For CUDA-specific PyTorch, run the official pip command from pytorch.org (e.g. with --extra-index-url)
