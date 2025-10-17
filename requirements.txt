@@ -1,0 +1,16 @@
+# Minimal runtime requirements (no versions). Only top-level packages you should pip-install.
+# For CUDA-enabled PyTorch wheels, install torch separately following https://pytorch.org/get-started/locally/
+
+torch
+torchvision
+torchaudio
+numpy
+pandas
+scikit-learn
+matplotlib
+tqdm
+xgboost
+
+# Install with:
+# python -m pip install -r requirements.txt
+# For CUDA-specific PyTorch, run the official pip command from pytorch.org (e.g. with --extra-index-url)
