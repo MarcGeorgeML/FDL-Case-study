@@ -17,6 +17,7 @@ matplotlib
 tqdm
 ipykernel
 torch-optimizer
+seaborn
 # Install with:
 # python -m pip install -r requirements.txt
 # For CUDA-specific PyTorch, run the official pip command from pytorch.org (e.g. with --extra-index-url)
