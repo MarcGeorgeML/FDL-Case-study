@@ -17,10 +17,8 @@ class TransformerBlockWithLayerDrop(nn.TransformerEncoderLayer):
         self.layerdrop = layerdrop
 
     def forward(self, src, *args, **kwargs):
-        # Randomly skip this layer during training
         if self.training and torch.rand(1).item() < self.layerdrop:
             return src
-        # Pass through the standard TransformerEncoderLayer
         return super().forward(src, *args, **kwargs)
 
 
@@ -41,10 +39,9 @@ class AviationTransformer(nn.Module):
 
         # Input projection
         self.input_projection = nn.Linear(num_features, d_model)
-        # Positional encoding
         self.pos_encoder = PositionalEncoding(d_model, max_seq_len, dropout)
 
-        # Build TransformerEncoder with LayerDrop blocks
+        # Transformer encoder
         encoder_layer = TransformerBlockWithLayerDrop(
             d_model=d_model,
             nhead=nhead,
@@ -60,32 +57,44 @@ class AviationTransformer(nn.Module):
             num_layers=num_layers
         )
 
-        # Metadata head
+        # Metadata head with batch norm
         self.meta_fc = nn.Sequential(
             nn.Linear(num_meta_features, 64),
+            nn.BatchNorm1d(64),
             nn.ReLU(),
             nn.Dropout(dropout)
         )
 
-        # Classification head
+        # Classification head with batch norm
         self.classifier = nn.Sequential(
             nn.Linear(d_model + 64, 256),
+            nn.BatchNorm1d(256),
             nn.ReLU(),
             nn.Dropout(dropout),
+
             nn.Linear(256, 128),
+            nn.BatchNorm1d(128),
             nn.ReLU(),
             nn.Dropout(dropout),
+
             nn.Linear(128, 1)
         )
 
     def forward(self, seq_input, meta_input):
         # seq_input: (batch, seq_len, num_features)
         # meta_input: (batch, num_meta_features)
-        x = self.input_projection(seq_input)     # → (batch, seq_len, d_model)
-        x = self.pos_encoder(x)                  # add positional encodings
-        x = self.transformer_encoder(x)          # → (batch, seq_len, d_model)
-        seq_features = x.mean(dim=1)             # global average pooling
-        meta_features = self.meta_fc(meta_input) # metadata embedding
-        combined = torch.cat([seq_features, meta_features], dim=1)
-        logits = self.classifier(combined)       # → (batch, 1)
+        x = self.input_projection(seq_input)        # → (batch, seq_len, d_model)
+        x = self.pos_encoder(x)                     # add positional encodings
+        x = self.transformer_encoder(x)             # → (batch, seq_len, d_model)
+        seq_features = x.mean(dim=1)                # global average pooling
+
+        # BatchNorm1d expects input (batch, features)
+        meta_features = self.meta_fc(meta_input)    # (batch, 64)
+
+        combined = torch.cat([seq_features, meta_features], dim=1)  # (batch, d_model+64)
+        logits = self.classifier(combined)          # → (batch, 1)
         return logits
+    
+    def summary(self):
+        from torchinfo import summary
+        return summary(self, input_data=[torch.zeros(1, 100, 10), torch.zeros(1, 5)])
